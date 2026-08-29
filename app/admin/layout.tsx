@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { ChevronDown, LayoutDashboard, Database, LogOut } from 'lucide-react'
+import { ChevronDown, LayoutDashboard, Database, LogOut, Ticket } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
   Dialog,
@@ -58,6 +58,19 @@ export default function AdminLayout({
             Dashboard
           </Link>
 
+          {/* Menu Daftar Tiket */}
+          <Link
+            href="/admin/tickets"
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+              pathname === '/admin/tickets'
+                ? 'bg-sangha-primary text-white'
+                : 'text-gray-300 hover:bg-sangha-primary/40 hover:text-white'
+            }`}
+          >
+            <Ticket size={18} />
+            Daftar Tiket
+          </Link>
+
           {/* Menu Accordion: Master Data */}
           <div>
             <button
@@ -81,19 +94,31 @@ export default function AdminLayout({
               <div className="pl-11 pr-2 py-1 space-y-1 mt-1 border-l border-sangha-primary/30 ml-4">
                 <Link
                   href="/admin/categories"
-                  className="block px-3 py-2 rounded-md text-xs text-gray-400 hover:text-white hover:bg-sangha-primary/20 transition-colors"
+                  className={`block px-3 py-2 rounded-md text-xs transition-colors ${
+                    pathname === '/admin/categories'
+                      ? 'text-white bg-sangha-primary/30 font-medium'
+                      : 'text-gray-400 hover:text-white hover:bg-sangha-primary/20'
+                  }`}
                 >
                   Kategori Tiket
                 </Link>
                 <Link
                   href="/admin/locations"
-                  className="block px-3 py-2 rounded-md text-xs text-gray-400 hover:text-white hover:bg-sangha-primary/20 transition-colors"
+                  className={`block px-3 py-2 rounded-md text-xs transition-colors ${
+                    pathname === '/admin/locations'
+                      ? 'text-white bg-sangha-primary/30 font-medium'
+                      : 'text-gray-400 hover:text-white hover:bg-sangha-primary/20'
+                  }`}
                 >
                   Lokasi
                 </Link>
                 <Link
                   href="/admin/bhikkhu"
-                  className="block px-3 py-2 rounded-md text-xs text-gray-400 hover:text-white hover:bg-sangha-primary/20 transition-colors"
+                  className={`block px-3 py-2 rounded-md text-xs transition-colors ${
+                    pathname === '/admin/bhikkhu'
+                      ? 'text-white bg-sangha-primary/30 font-medium'
+                      : 'text-gray-400 hover:text-white hover:bg-sangha-primary/20'
+                  }`}
                 >
                   Data Bhikkhu
                 </Link>
