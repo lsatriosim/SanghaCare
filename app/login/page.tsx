@@ -24,17 +24,44 @@ export default function LoginPage() {
     setLoading(true)
     setErrorMsg(null)
 
-    const { error } = await supabase.auth.signInWithPassword({
+    // 1. Proses autentikasi masuk
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
-    if (error) {
-      setErrorMsg(error.message)
+    if (authError) {
+      setErrorMsg(authError.message)
       setLoading(false)
-    } else {
-      router.push('/admin')
+      return
+    }
+
+    const user = authData.user
+
+    if (user) {
+      // 2. Ambil role pengguna dari tabel profiles berdasarkan user.id
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError) {
+        setErrorMsg('Gagal memuat data profil pengguna.')
+        setLoading(false)
+        return
+      }
+
+      // 3. Logika pengalihan (Redirection) berdasarkan role
+      if (profileData?.role === 'admin') {
+        router.push('/admin')
+      } else {
+        router.push('/user')
+      }
+      
       router.refresh()
+    } else {
+      setLoading(false)
     }
   }
 
@@ -48,9 +75,9 @@ export default function LoginPage() {
 
         <Card className="border-sangha-cream shadow-lg bg-white">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-semibold text-sangha-dark">Masuk Admin</CardTitle>
+            <CardTitle className="text-2xl font-semibold text-sangha-dark">Masuk Portal</CardTitle>
             <CardDescription className="text-gray-600">
-              Masukkan email dan kata sandi akun pengurus Anda.
+              Masukkan email dan kata sandi akun Anda.
             </CardDescription>
           </CardHeader>
           <CardContent>

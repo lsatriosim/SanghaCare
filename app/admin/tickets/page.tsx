@@ -4,12 +4,17 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, Ticket, MapPin, User, Tag, Calendar } from 'lucide-react'
+import { 
+  Loader2, Ticket, MapPin, User, Tag, Calendar, 
+  CheckCircle2, Trash2 
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState<any[]>([])
+  const [staffList, setStaffList] = useState<any[]>([])
   const [isLoadingFetch, setIsLoadingFetch] = useState(true)
 
   const supabase = createClient()
@@ -38,9 +43,83 @@ export default function TicketsPage() {
     setIsLoadingFetch(false)
   }
 
+  const fetchStaffList = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, role') // Ambil juga kolom role untuk dicek
+
+    if (error) { 
+      toast.error("Gagal memuat daftar staff", { description: error.message })
+      return
+    }
+
+    if (data) {
+      const staffMembers = data.filter(
+        (user) => user.role && user.role.toLowerCase() === 'staff'
+      )
+      
+      setStaffList(staffMembers)
+    }
+  }
+
   useEffect(() => {
     fetchTickets()
+    fetchStaffList()
   }, [])
+
+  // Aksi: Assign Tiket ke Staff tertentu
+  const handleAssignTicket = async (ticketId: number, staffId: string, staffName: string) => {
+    const { error } = await supabase
+      .from('tickets')
+      .update({ 
+        assigned_to: staffId, 
+        status: 'in_progress',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', ticketId)
+
+    if (error) {
+      toast.error("Gagal menugaskan tiket", { description: error.message })
+    } else {
+      toast.success("Tiket berhasil ditugaskan", { description: `Dialihkan ke ${staffName} (In Progress)` })
+      fetchTickets()
+    }
+  }
+
+  // Aksi: Selesaikan Tiket (Resolved)
+  const handleResolveTicket = async (ticketId: number) => {
+    const { error } = await supabase
+      .from('tickets')
+      .update({ 
+        status: 'resolved',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', ticketId)
+
+    if (error) {
+      toast.error("Gagal memperbarui status", { description: error.message })
+    } else {
+      toast.success("Tiket diselesaikan", { description: "Status tiket diubah menjadi Resolved" })
+      fetchTickets()
+    }
+  }
+
+  // Aksi: Hapus Tiket (Hard Delete)
+  const handleDeleteTicket = async (ticketId: number) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus tiket ini secara permanen?")) return
+
+    const { error } = await supabase
+      .from('tickets')
+      .delete()
+      .eq('id', ticketId)
+
+    if (error) {
+      toast.error("Gagal menghapus tiket", { description: error.message })
+    } else {
+      toast.success("Tiket berhasil dihapus")
+      setTickets(tickets.filter((t) => t.id !== ticketId))
+    }
+  }
 
   // Helper untuk badge status tiket
   const getStatusBadge = (status: string) => {
@@ -59,10 +138,10 @@ export default function TicketsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 max-w-7xl">
       <div>
         <h2 className="text-2xl font-bold text-sangha-dark">Daftar Tiket Permohonan / Kendala</h2>
-        <p className="text-gray-600 text-sm">Pantau seluruh tiket laporan atau permintaan yang masuk ke sistem.</p>
+        <p className="text-gray-600 text-sm">Pantau dan kelola seluruh tiket laporan atau permintaan yang masuk ke sistem.</p>
       </div>
 
       <Card className="border-sangha-cream shadow-xs bg-white">
@@ -82,14 +161,15 @@ export default function TicketsPage() {
                   <th className="p-3 font-semibold">Lokasi & Ruangan</th>
                   <th className="p-3 font-semibold">Kategori & Deskripsi</th>
                   <th className="p-3 font-semibold w-32">Status</th>
-                  <th className="p-3 font-semibold w-36">Ditugaskan ke</th>
-                  <th className="p-3 font-semibold w-32">Tanggal</th>
+                  <th className="p-3 font-semibold w-40">Ditugaskan ke</th>
+                  <th className="p-3 font-semibold w-28">Tanggal</th>
+                  <th className="p-3 font-semibold w-52 text-center">Aksi Manajemen</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoadingFetch ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-gray-500">
+                    <td colSpan={8} className="p-8 text-center text-gray-500">
                       <div className="flex items-center justify-center gap-2">
                         <Loader2 size={20} className="animate-spin text-sangha-primary" />
                         <span>Memuat data tiket...</span>
@@ -98,7 +178,7 @@ export default function TicketsPage() {
                   </tr>
                 ) : tickets.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-6 text-center text-gray-500">
+                    <td colSpan={8} className="p-6 text-center text-gray-500">
                       Belum ada tiket yang terdaftar di dalam sistem.
                     </td>
                   </tr>
@@ -169,6 +249,58 @@ export default function TicketsPage() {
                             month: 'short',
                             year: 'numeric'
                           })}
+                        </div>
+                      </td>
+
+                      {/* Kolom Aksi */}
+                      <td className="p-3 text-center space-y-2">
+                        {/* Dropdown / Selection untuk Assign Staff */}
+                        <div className="flex flex-col gap-1.5">
+                          <select
+                            className="text-xs border border-gray-200 rounded px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-sangha-primary"
+                            value={item.assigned_to || ""}
+                            onChange={(e) => {
+                              const selectedStaffId = e.target.value
+                              if (!selectedStaffId) return
+                              const staff = staffList.find(s => s.id === selectedStaffId)
+                              if (staff) {
+                                handleAssignTicket(item.id, staff.id, staff.full_name)
+                              }
+                            }}
+                          >
+                            <option value="" disabled>-- Assign ke Staff --</option>
+                            {staffList.map((staff) => (
+                              <option key={staff.id} value={staff.id}>
+                                {staff.full_name}
+                              </option>
+                            ))}
+                          </select>
+
+                          <div className="flex items-center justify-center gap-1">
+                            {/* Tombol Complete */}
+                            {item.status !== 'resolved' && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleResolveTicket(item.id)}
+                                className="h-7 text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50 px-2 gap-1 flex-1"
+                              >
+                                <CheckCircle2 size={13} />
+                                Selesai
+                              </Button>
+                            )}
+
+                            {/* Tombol Delete */}
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleDeleteTicket(item.id)}
+                              className="h-7 text-xs text-red-600 border-red-200 hover:bg-red-50 px-2 gap-1"
+                            >
+                              <Trash2 size={13} />
+                              Hapus
+                            </Button>
+                          </div>
                         </div>
                       </td>
                     </tr>
