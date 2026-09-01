@@ -1,23 +1,36 @@
 // app/login/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client' // Menggunakan client yang sudah ada
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { getDictionary, getClientLocale } from '@/lib/dictionary'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  
+  // State untuk melacak bahasa aktif
+  const [locale, setLocale] = useState<'id' | 'en'>('id')
+  
   const router = useRouter()
-
-  // Inisialisasi dari folder lib/supabase/client.ts
   const supabase = createClient()
+
+  // Ambil preferensi bahasa dari helper terpusat saat komponen dimuat
+  useEffect(() => {
+    setLocale(getClientLocale())
+  }, [])
+
+  // Ambil teks kamus terpusat khusus halaman login
+  const dict = getDictionary(locale)
+  const t = dict.loginPage
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,7 +60,7 @@ export default function LoginPage() {
         .single()
 
       if (profileError) {
-        setErrorMsg('Gagal memuat data profil pengguna.')
+        setErrorMsg(t.errorProfile)
         setLoading(false)
         return
       }
@@ -66,18 +79,24 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-sangha-light px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-sangha-light px-4 relative">
+      
+      {/* Tombol Pengganti Bahasa di Pojok Kanan Atas */}
+      <div className="absolute top-6 right-6">
+        <LanguageSwitcher currentLocale={locale} />
+      </div>
+
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-sangha-dark">SanghaCare</h1>
-          <p className="text-sangha-primary text-sm mt-1">Portal Manajemen Pengurus Acara</p>
+          <p className="text-sangha-primary text-sm mt-1">{t.subtitle}</p>
         </div>
 
         <Card className="border-sangha-cream shadow-lg bg-white">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-semibold text-sangha-dark">Masuk Portal</CardTitle>
+            <CardTitle className="text-2xl font-semibold text-sangha-dark">{t.title}</CardTitle>
             <CardDescription className="text-gray-600">
-              Masukkan email dan kata sandi akun Anda.
+              {t.description}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -89,7 +108,7 @@ export default function LoginPage() {
               )}
               
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sangha-dark font-medium">Email</Label>
+                <Label htmlFor="email" className="text-sangha-dark font-medium">{t.emailLabel}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -102,7 +121,7 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sangha-dark font-medium">Kata Sandi</Label>
+                <Label htmlFor="password" className="text-sangha-dark font-medium">{t.passwordLabel}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -119,7 +138,7 @@ export default function LoginPage() {
                 className="w-full bg-sangha-primary hover:bg-sangha-dark text-white transition-colors py-2"
                 disabled={loading}
               >
-                {loading ? 'Memproses...' : 'Masuk ke Dashboard'}
+                {loading ? t.loadingButton : t.submitButton}
               </Button>
             </form>
           </CardContent>

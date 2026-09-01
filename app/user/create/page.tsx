@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, Send, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { getDictionary, getClientLocale } from '@/lib/dictionary'
 
 export default function CreateTicketPage() {
   const router = useRouter()
@@ -16,6 +17,7 @@ export default function CreateTicketPage() {
 
   const [isLoadingMaster, setIsLoadingMaster] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [locale, setLocale] = useState<'id' | 'en'>('id')
 
   // State pilihan Master Data
   const [bhikkhus, setBhikkhus] = useState<any[]>([])
@@ -31,22 +33,29 @@ export default function CreateTicketPage() {
     description: '',
   })
 
+  // Set locale saat komponen dimuat
+  useEffect(() => {
+    setLocale(getClientLocale())
+  }, [])
+
+  // Ambil teks kamus terpusat
+  const dict = getDictionary(locale)
+  const t = dict.createTicketPage
+
   // 1. Ambil data master & cek role pengguna untuk aturan filter bhikkhu
   useEffect(() => {
     const fetchMasterData = async () => {
       setIsLoadingMaster(true)
 
-      // Dapatkan user yang sedang login saat ini
       const { data: authData, error: authError } = await supabase.auth.getUser()
       const currentUserId = authData?.user?.id
 
       if (authError || !currentUserId) {
-        toast.error("Sesi pengguna tidak valid. Silakan masuk kembali.")
+        toast.error(t.toastAuthError)
         router.push('/login')
         return
       }
 
-      // Ambil profil pengguna untuk mengecek role (admin / staff / user)
       const { data: profileData } = await supabase
         .from('profiles')
         .select('role')
@@ -55,14 +64,12 @@ export default function CreateTicketPage() {
 
       const userRole = profileData?.role
 
-      // Siapkan query bhikkhu berdasarkan role
       let bhikkhuQuery = supabase
         .from('bhikkhu_registry')
         .select('id, full_name, type, profile_id')
         .eq('isDeleted', false)
         .order('full_name')
 
-      // Jika BUKAN admin atau staff, terapkan filter profile_id
       if (userRole !== 'admin' && userRole !== 'staff') {
         bhikkhuQuery = bhikkhuQuery.or(`profile_id.is.null,profile_id.eq.${currentUserId}`)
       }
@@ -76,7 +83,6 @@ export default function CreateTicketPage() {
       if (bhikkhuRes.data) {
         setBhikkhus(bhikkhuRes.data)
         
-        // Auto-select jika hanya ada 1 bhikkhu yang terhubung langsung ke akun user ini (khusus non-admin/staff)
         const linkedBhikkhu = bhikkhuRes.data.find((b) => b.profile_id === currentUserId)
         if (linkedBhikkhu && userRole !== 'admin' && userRole !== 'staff') {
           setFormData((prev) => ({ ...prev, bhikkhu_id: String(linkedBhikkhu.id) }))
@@ -87,27 +93,25 @@ export default function CreateTicketPage() {
       if (categoryRes.data) setCategories(categoryRes.data)
 
       if (bhikkhuRes.error || locationRes.error || categoryRes.error) {
-        toast.error("Gagal memuat beberapa data pilihan master.")
+        toast.error(t.toastMasterError)
       }
 
       setIsLoadingMaster(false)
     }
 
     fetchMasterData()
-  }, [router, supabase])
+  }, [router, supabase, t])
 
-  // Handle perubahan input form
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  // Handle Submit Form ke Supabase
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!formData.bhikkhu_id || !formData.location_id || !formData.category_id || !formData.description) {
-      toast.error("Mohon lengkapi semua kolom yang wajib diisi.")
+      toast.error(t.toastFormIncomplete)
       return
     }
 
@@ -120,18 +124,18 @@ export default function CreateTicketPage() {
         room_detail: formData.room_detail || null,
         category_id: Number(formData.category_id),
         description: formData.description,
-        status: 'pending', // Default status sesuai schema
+        status: 'pending',
       },
     ])
 
     if (error) {
-      toast.error("Gagal membuat tiket", {
+      toast.error(t.toastError, {
         description: error.message,
       })
       setIsSubmitting(false)
     } else {
-      toast.success("Tiket berhasil dikirim!", {
-        description: "Pengurus akan segera meninjau permohonan atau laporan Anda.",
+      toast.success(t.toastSuccess, {
+        description: t.toastSuccessDesc,
       })
       router.push('/user')
       router.refresh()
@@ -147,31 +151,30 @@ export default function CreateTicketPage() {
           </Button>
         </Link>
         <div>
-          <h2 className="text-2xl font-bold text-sangha-dark">Buat Tiket Baru</h2>
-          <p className="text-gray-600 text-sm">Ajukan laporan kendala atau permintaan fasilitas baru.</p>
+          <h2 className="text-2xl font-bold text-sangha-dark">{t.title}</h2>
+          <p className="text-gray-600 text-sm">{t.subtitle}</p>
         </div>
       </div>
 
       <Card className="border-sangha-cream shadow-xs bg-white">
         <CardHeader>
-          <CardTitle className="text-lg text-sangha-dark font-semibold">Formulir Permohonan</CardTitle>
+          <CardTitle className="text-lg text-sangha-dark font-semibold">{t.cardTitle}</CardTitle>
           <CardDescription className="text-gray-500">
-            Isi detail informasi di bawah ini dengan lengkap dan jelas.
+            {t.cardDesc}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoadingMaster ? (
             <div className="py-12 text-center flex flex-col items-center justify-center gap-2 text-gray-500">
               <Loader2 size={24} className="animate-spin text-sangha-primary" />
-              <span>Memuat data pilihan...</span>
+              <span>{t.loadingMaster}</span>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
               
-              {/* Pilihan Bhikkhu / Pelapor */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-sangha-dark uppercase tracking-wider">
-                  Nama Bhikkhu / Pelapor <span className="text-red-500">*</span>
+                  {t.bhikkhuLabel} <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="bhikkhu_id"
@@ -180,7 +183,7 @@ export default function CreateTicketPage() {
                   required
                   className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-sangha-primary"
                 >
-                  <option value="">-- Pilih Bhikkhu --</option>
+                  <option value="">{t.bhikkhuPlaceholder}</option>
                   {bhikkhus.map((b) => (
                     <option key={b.id} value={b.id}>
                       {b.full_name} {b.type ? `(${b.type.replace(/_/g, ' ')})` : ''}
@@ -189,11 +192,10 @@ export default function CreateTicketPage() {
                 </select>
               </div>
 
-              {/* Grid Lokasi & Detail Ruangan */}
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-sangha-dark uppercase tracking-wider">
-                    Lokasi / Gedung <span className="text-red-500">*</span>
+                    {t.locationLabel} <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="location_id"
@@ -202,7 +204,7 @@ export default function CreateTicketPage() {
                     required
                     className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-sangha-primary"
                   >
-                    <option value="">-- Pilih Lokasi --</option>
+                    <option value="">{t.locationPlaceholder}</option>
                     {locations.map((loc) => (
                       <option key={loc.id} value={loc.id}>
                         {loc.name}
@@ -213,23 +215,22 @@ export default function CreateTicketPage() {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-sangha-dark uppercase tracking-wider">
-                    Detail Ruangan (Opsional)
+                    {t.roomLabel}
                   </label>
                   <input
                     type="text"
                     name="room_detail"
                     value={formData.room_detail}
                     onChange={handleChange}
-                    placeholder="Contoh: Kamar 204, Lantai 2"
+                    placeholder={t.roomPlaceholder}
                     className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-sangha-primary"
                   />
                 </div>
               </div>
 
-              {/* Kategori Tiket */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-sangha-dark uppercase tracking-wider">
-                  Kategori Kendala / Permintaan <span className="text-red-500">*</span>
+                  {t.categoryLabel} <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="category_id"
@@ -238,7 +239,7 @@ export default function CreateTicketPage() {
                   required
                   className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-sangha-primary"
                 >
-                  <option value="">-- Pilih Kategori --</option>
+                  <option value="">{t.categoryPlaceholder}</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
@@ -247,10 +248,9 @@ export default function CreateTicketPage() {
                 </select>
               </div>
 
-              {/* Deskripsi */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-sangha-dark uppercase tracking-wider">
-                  Deskripsi Lengkap <span className="text-red-500">*</span>
+                  {t.descriptionLabel} <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   name="description"
@@ -258,16 +258,15 @@ export default function CreateTicketPage() {
                   value={formData.description}
                   onChange={handleChange}
                   required
-                  placeholder="Jelaskan kendala atau permohonan secara rinci..."
+                  placeholder={t.descriptionPlaceholder}
                   className="w-full rounded-md border border-gray-300 bg-white p-3 text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-sangha-primary resize-y"
                 />
               </div>
 
-              {/* Tombol Aksi */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
                 <Link href="/user">
                   <Button type="button" variant="outline" className="border-gray-300 text-gray-700">
-                    Batal
+                    {t.cancelBtn}
                   </Button>
                 </Link>
                 <Button
@@ -278,12 +277,12 @@ export default function CreateTicketPage() {
                   {isSubmitting ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      <span>Mengirim...</span>
+                      <span>{t.submittingBtn}</span>
                     </>
                   ) : (
                     <>
                       <Send size={16} />
-                      <span>Kirim Tiket</span>
+                      <span>{t.submitBtn}</span>
                     </>
                   )}
                 </Button>

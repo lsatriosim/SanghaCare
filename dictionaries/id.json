@@ -1,0 +1,67 @@
+{
+  "layout": {
+    "portalTitle": "Portal SanghaCare",
+    "myTickets": "Tiket Saya",
+    "createTicket": "Buat Tiket Baru",
+    "logout": "Keluar"
+  },
+  "loginPage": {
+    "subtitle": "Portal Manajemen & Dukungan Acara",
+    "title": "Masuk Portal",
+    "description": "Masukkan email dan kata sandi akun Anda.",
+    "emailLabel": "Email",
+    "passwordLabel": "Kata Sandi",
+    "submitButton": "Masuk ke Dashboard",
+    "loadingButton": "Memproses...",
+    "errorProfile": "Gagal memuat data profil pengguna."
+  },
+  "ticketsPage": {
+    "title": "Tiket Saya",
+    "subtitle": "Daftar permohonan atau laporan kendala yang telah diajukan.",
+    "createBtn": "Buat Tiket Baru",
+    "loading": "Memuat tiket Anda...",
+    "emptyTitle": "Belum Ada Tiket",
+    "emptyDesc": "Anda belum pernah membuat permohonan atau laporan kendala. Silakan buat tiket baru jika memerlukan bantuan.",
+    "emptyBtn": "Buat Tiket Sekarang",
+    "location": "Lokasi:",
+    "reporter": "Pelapor:",
+    "assignee": "Petugas:",
+    "unassigned": "Belum ditugaskan",
+    "generalCategory": "Kategori Umum",
+    "descriptionTitle": "Deskripsi Kendala / Permintaan:",
+    "status": {
+      "pending": "Pending",
+      "in_progress": "Sedang Diproses",
+      "resolved": "Selesai",
+      "closed": "Ditutup"
+    },
+    "toastErrorAuth": "Sesi pengguna tidak valid. Silakan masuk kembali.",
+    "toastErrorFetch": "Gagal memuat daftar tiket"
+  },
+  "createTicketPage": {
+    "title": "Buat Tiket Baru",
+    "subtitle": "Ajukan laporan kendala atau permintaan fasilitas baru.",
+    "cardTitle": "Formulir Permohonan",
+    "cardDesc": "Isi detail informasi di bawah ini dengan lengkap dan jelas.",
+    "loadingMaster": "Memuat data pilihan...",
+    "bhikkhuLabel": "Nama Bhikkhu / Pelapor",
+    "bhikkhuPlaceholder": "-- Pilih Bhikkhu --",
+    "locationLabel": "Lokasi / Gedung",
+    "locationPlaceholder": "-- Pilih Lokasi --",
+    "roomLabel": "Detail Ruangan (Opsional)",
+    "roomPlaceholder": "Contoh: Kamar 204, Lantai 2",
+    "categoryLabel": "Kategori Kendala / Permintaan",
+    "categoryPlaceholder": "-- Pilih Kategori --",
+    "descriptionLabel": "Deskripsi Lengkap",
+    "descriptionPlaceholder": "Jelaskan kendala atau permohonan secara rinci...",
+    "cancelBtn": "Batal",
+    "submitBtn": "Kirim Tiket",
+    "submittingBtn": "Mengirim...",
+    "toastAuthError": "Sesi pengguna tidak valid. Silakan masuk kembali.",
+    "toastMasterError": "Gagal memuat beberapa data pilihan master.",
+    "toastFormIncomplete": "Mohon lengkapi semua kolom yang wajib diisi.",
+    "toastSuccess": "Tiket berhasil dikirim!",
+    "toastSuccessDesc": "Pengurus akan segera meninjau permohonan atau laporan Anda.",
+    "toastError": "Gagal membuat tiket"
+  }
+}

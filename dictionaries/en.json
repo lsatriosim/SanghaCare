@@ -1,0 +1,67 @@
+{
+  "layout": {
+    "portalTitle": "SanghaCare Portal",
+    "myTickets": "My Tickets",
+    "createTicket": "Create New Ticket",
+    "logout": "Sign Out"
+  },
+  "ticketsPage": {
+    "title": "My Tickets",
+    "subtitle": "List of submitted requests or issue reports.",
+    "createBtn": "Create New Ticket",
+    "loading": "Loading your tickets...",
+    "emptyTitle": "No Tickets Yet",
+    "emptyDesc": "You haven't created any requests or issue reports yet. Please create a new ticket if you need assistance.",
+    "emptyBtn": "Create Ticket Now",
+    "location": "Location:",
+    "reporter": "Reporter:",
+    "assignee": "Staff:",
+    "unassigned": "Unassigned",
+    "generalCategory": "General Category",
+    "descriptionTitle": "Description / Request Details:",
+    "status": {
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "toastErrorAuth": "Invalid user session. Please sign in again.",
+    "toastErrorFetch": "Failed to load ticket list"
+  },
+  "loginPage": {
+    "subtitle": "Event Management & Support Portal",
+    "title": "Sign In",
+    "description": "Enter your account email and password.",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "submitButton": "Sign In to Dashboard",
+    "loadingButton": "Processing...",
+    "errorProfile": "Failed to load user profile data."
+  },
+  "createTicketPage": {
+    "title": "Create New Ticket",
+    "subtitle": "Submit an issue report or new facility request.",
+    "cardTitle": "Request Form",
+    "cardDesc": "Fill out the information details below completely and clearly.",
+    "loadingMaster": "Loading selection data...",
+    "bhikkhuLabel": "Bhikkhu / Reporter Name",
+    "bhikkhuPlaceholder": "-- Select Bhikkhu --",
+    "locationLabel": "Location / Building",
+    "locationPlaceholder": "-- Select Location --",
+    "roomLabel": "Room Details (Optional)",
+    "roomPlaceholder": "Example: Room 204, 2nd Floor",
+    "categoryLabel": "Issue / Request Category",
+    "categoryPlaceholder": "-- Select Category --",
+    "descriptionLabel": "Full Description",
+    "descriptionPlaceholder": "Explain the issue or request in detail...",
+    "cancelBtn": "Cancel",
+    "submitBtn": "Send Ticket",
+    "submittingBtn": "Sending...",
+    "toastAuthError": "Invalid user session. Please sign in again.",
+    "toastMasterError": "Failed to load some master selection data.",
+    "toastFormIncomplete": "Please complete all required fields.",
+    "toastSuccess": "Ticket sent successfully!",
+    "toastSuccessDesc": "The committee will review your request or report shortly.",
+    "toastError": "Failed to create ticket"
+  }
+}
