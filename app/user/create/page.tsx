@@ -4,7 +4,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Loader2, Send, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -47,7 +53,9 @@ export default function CreateTicketPage() {
     const fetchMasterData = async () => {
       setIsLoadingMaster(true)
 
-      const { data: authData, error: authError } = await supabase.auth.getUser()
+      const { data: authData, error: authError } =
+        await supabase.auth.getUser()
+
       const currentUserId = authData?.user?.id
 
       if (authError || !currentUserId) {
@@ -71,9 +79,11 @@ export default function CreateTicketPage() {
         .order('full_name')
 
       if (userRole !== 'admin' && userRole !== 'staff') {
-        bhikkhuQuery = bhikkhuQuery.or(`profile_id.is.null,profile_id.eq.${currentUserId}`)
+        bhikkhuQuery = bhikkhuQuery.or(
+          `profile_id.is.null,profile_id.eq.${currentUserId}`
+        )
       }
-      
+
       const [bhikkhuRes, locationRes, categoryRes] = await Promise.all([
         bhikkhuQuery,
         supabase.from('locations').select('id, name').order('name'),
@@ -82,17 +92,36 @@ export default function CreateTicketPage() {
 
       if (bhikkhuRes.data) {
         setBhikkhus(bhikkhuRes.data)
-        
-        const linkedBhikkhu = bhikkhuRes.data.find((b) => b.profile_id === currentUserId)
-        if (linkedBhikkhu && userRole !== 'admin' && userRole !== 'staff') {
-          setFormData((prev) => ({ ...prev, bhikkhu_id: String(linkedBhikkhu.id) }))
+
+        const linkedBhikkhu = bhikkhuRes.data.find(
+          (b) => b.profile_id === currentUserId
+        )
+
+        if (
+          linkedBhikkhu &&
+          userRole !== 'admin' &&
+          userRole !== 'staff'
+        ) {
+          setFormData((prev) => ({
+            ...prev,
+            bhikkhu_id: String(linkedBhikkhu.id),
+          }))
         }
       }
 
-      if (locationRes.data) setLocations(locationRes.data)
-      if (categoryRes.data) setCategories(categoryRes.data)
+      if (locationRes.data) {
+        setLocations(locationRes.data)
+      }
 
-      if (bhikkhuRes.error || locationRes.error || categoryRes.error) {
+      if (categoryRes.data) {
+        setCategories(categoryRes.data)
+      }
+
+      if (
+        bhikkhuRes.error ||
+        locationRes.error ||
+        categoryRes.error
+      ) {
         toast.error(t.toastMasterError)
       }
 
@@ -102,43 +131,72 @@ export default function CreateTicketPage() {
     fetchMasterData()
   }, [router, supabase, t])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.bhikkhu_id || !formData.location_id || !formData.category_id || !formData.description) {
+    if (
+      !formData.bhikkhu_id ||
+      !formData.location_id ||
+      !formData.category_id ||
+      !formData.description
+    ) {
       toast.error(t.toastFormIncomplete)
       return
     }
 
     setIsSubmitting(true)
 
-    const { error } = await supabase.from('tickets').insert([
-      {
-        bhikkhu_id: Number(formData.bhikkhu_id),
-        location_id: Number(formData.location_id),
-        room_detail: formData.room_detail || null,
-        category_id: Number(formData.category_id),
-        description: formData.description,
-        status: 'pending',
-      },
-    ])
+    try {
+      // 1. Create the ticket first
+      const { data: ticket, error: ticketError } = await supabase
+        .from('tickets')
+        .insert([
+          {
+            bhikkhu_id: Number(formData.bhikkhu_id),
+            location_id: Number(formData.location_id),
+            room_detail: formData.room_detail || null,
+            category_id: Number(formData.category_id),
+            description: formData.description,
+            status: 'pending',
+          },
+        ])
+        .select('id')
+        .single()
 
-    if (error) {
-      toast.error(t.toastError, {
-        description: error.message,
-      })
-      setIsSubmitting(false)
-    } else {
+      if (ticketError || !ticket) {
+        throw new Error(
+          ticketError?.message ?? 'Failed to create ticket'
+        )
+      }
+
       toast.success(t.toastSuccess, {
         description: t.toastSuccessDesc,
       })
+
       router.push('/user')
       router.refresh()
+    } catch (error: any) {
+      console.error('Create ticket error:', error)
+
+      toast.error(t.toastError, {
+        description:
+          error?.message ?? 'Failed to create ticket',
+      })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -146,36 +204,56 @@ export default function CreateTicketPage() {
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/user">
-          <Button variant="outline" size="icon" className="border-sangha-cream text-sangha-dark">
+          <Button
+            variant="outline"
+            size="icon"
+            className="border-sangha-cream text-sangha-dark"
+          >
             <ArrowLeft size={16} />
           </Button>
         </Link>
+
         <div>
-          <h2 className="text-2xl font-bold text-sangha-dark">{t.title}</h2>
-          <p className="text-gray-600 text-sm">{t.subtitle}</p>
+          <h2 className="text-2xl font-bold text-sangha-dark">
+            {t.title}
+          </h2>
+          <p className="text-gray-600 text-sm">
+            {t.subtitle}
+          </p>
         </div>
       </div>
 
       <Card className="border-sangha-cream shadow-xs bg-white">
         <CardHeader>
-          <CardTitle className="text-lg text-sangha-dark font-semibold">{t.cardTitle}</CardTitle>
+          <CardTitle className="text-lg text-sangha-dark font-semibold">
+            {t.cardTitle}
+          </CardTitle>
+
           <CardDescription className="text-gray-500">
             {t.cardDesc}
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           {isLoadingMaster ? (
             <div className="py-12 text-center flex flex-col items-center justify-center gap-2 text-gray-500">
-              <Loader2 size={24} className="animate-spin text-sangha-primary" />
+              <Loader2
+                size={24}
+                className="animate-spin text-sangha-primary"
+              />
               <span>{t.loadingMaster}</span>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
-              
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-5"
+            >
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-sangha-dark uppercase tracking-wider">
-                  {t.bhikkhuLabel} <span className="text-red-500">*</span>
+                  {t.bhikkhuLabel}{' '}
+                  <span className="text-red-500">*</span>
                 </label>
+
                 <select
                   name="bhikkhu_id"
                   value={formData.bhikkhu_id}
@@ -183,10 +261,19 @@ export default function CreateTicketPage() {
                   required
                   className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-sangha-primary"
                 >
-                  <option value="">{t.bhikkhuPlaceholder}</option>
+                  <option value="">
+                    {t.bhikkhuPlaceholder}
+                  </option>
+
                   {bhikkhus.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.full_name} {b.type ? `(${b.type.replace(/_/g, ' ')})` : ''}
+                    <option
+                      key={b.id}
+                      value={b.id}
+                    >
+                      {b.full_name}{' '}
+                      {b.type
+                        ? `(${b.type.replace(/_/g, ' ')})`
+                        : ''}
                     </option>
                   ))}
                 </select>
@@ -195,8 +282,10 @@ export default function CreateTicketPage() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-sangha-dark uppercase tracking-wider">
-                    {t.locationLabel} <span className="text-red-500">*</span>
+                    {t.locationLabel}{' '}
+                    <span className="text-red-500">*</span>
                   </label>
+
                   <select
                     name="location_id"
                     value={formData.location_id}
@@ -204,9 +293,15 @@ export default function CreateTicketPage() {
                     required
                     className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-sangha-primary"
                   >
-                    <option value="">{t.locationPlaceholder}</option>
+                    <option value="">
+                      {t.locationPlaceholder}
+                    </option>
+
                     {locations.map((loc) => (
-                      <option key={loc.id} value={loc.id}>
+                      <option
+                        key={loc.id}
+                        value={loc.id}
+                      >
                         {loc.name}
                       </option>
                     ))}
@@ -217,6 +312,7 @@ export default function CreateTicketPage() {
                   <label className="text-xs font-semibold text-sangha-dark uppercase tracking-wider">
                     {t.roomLabel}
                   </label>
+
                   <input
                     type="text"
                     name="room_detail"
@@ -230,8 +326,10 @@ export default function CreateTicketPage() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-sangha-dark uppercase tracking-wider">
-                  {t.categoryLabel} <span className="text-red-500">*</span>
+                  {t.categoryLabel}{' '}
+                  <span className="text-red-500">*</span>
                 </label>
+
                 <select
                   name="category_id"
                   value={formData.category_id}
@@ -239,9 +337,15 @@ export default function CreateTicketPage() {
                   required
                   className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-sangha-primary"
                 >
-                  <option value="">{t.categoryPlaceholder}</option>
+                  <option value="">
+                    {t.categoryPlaceholder}
+                  </option>
+
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
+                    <option
+                      key={cat.id}
+                      value={cat.id}
+                    >
                       {cat.name}
                     </option>
                   ))}
@@ -250,8 +354,10 @@ export default function CreateTicketPage() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-sangha-dark uppercase tracking-wider">
-                  {t.descriptionLabel} <span className="text-red-500">*</span>
+                  {t.descriptionLabel}{' '}
+                  <span className="text-red-500">*</span>
                 </label>
+
                 <textarea
                   name="description"
                   rows={4}
@@ -265,10 +371,15 @@ export default function CreateTicketPage() {
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
                 <Link href="/user">
-                  <Button type="button" variant="outline" className="border-gray-300 text-gray-700">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-gray-300 text-gray-700"
+                  >
                     {t.cancelBtn}
                   </Button>
                 </Link>
+
                 <Button
                   type="submit"
                   disabled={isSubmitting}
@@ -276,7 +387,10 @@ export default function CreateTicketPage() {
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 size={16} className="animate-spin" />
+                      <Loader2
+                        size={16}
+                        className="animate-spin"
+                      />
                       <span>{t.submittingBtn}</span>
                     </>
                   ) : (
@@ -287,7 +401,6 @@ export default function CreateTicketPage() {
                   )}
                 </Button>
               </div>
-
             </form>
           )}
         </CardContent>
