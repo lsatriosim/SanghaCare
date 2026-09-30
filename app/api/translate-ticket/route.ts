@@ -50,11 +50,37 @@ async function translateText(
 }
 
 export async function POST(req: Request) {
-  const supabase = await createClient()
+  console.log('--- ALL INCOMING HEADERS ---');
+  req.headers.forEach((value, key) => {
+    console.log(`${key}: ${value}`);
+  });
+  console.log('----------------------------');
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const authHeader = req.headers.get('authorization');
+  console.log('Authorization Header:', authHeader);
+
+  let user = null;
+
+  // 1. If Flutter sends a Bearer token, validate it directly
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    
+    // Create an un-scoped Supabase client just for token validation
+    const tokenSupabase = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+    );
+    
+    const { data, error } = await tokenSupabase.auth.getUser(token);
+    if (!error && data?.user) {
+      user = data.user;
+    }
+  } else {
+    // 2. Fallback to standard web cookie client if no Bearer token is present
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data?.user;
+  }
 
   if (!user) {
     return NextResponse.json(
