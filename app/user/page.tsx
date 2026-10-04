@@ -16,7 +16,7 @@ import { getDictionary, getClientLocale } from '@/lib/dictionary'
 export default function UserTicketsPage() {
   const [tickets, setTickets] = useState<any[]>([])
   const [isLoadingFetch, setIsLoadingFetch] = useState(true)
-  const [locale, setLocale] = useState<'id' | 'en'>('id')
+  const [locale, setLocale] = useState<'id' | 'en' | 'th'>('id')
   const [isAdmin, setIsAdmin] = useState(false)
   const [showOriginal, setShowOriginal] = useState<Set<number>>(new Set())
   const [translations, setTranslations] = useState<

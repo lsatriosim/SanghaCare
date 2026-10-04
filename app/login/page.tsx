@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   
   // State untuk melacak bahasa aktif
-  const [locale, setLocale] = useState<'id' | 'en'>('id')
+  const [locale, setLocale] = useState<'id' | 'en' | 'th'>('id')
   
   const router = useRouter()
   const supabase = createClient()

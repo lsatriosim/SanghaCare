@@ -23,7 +23,7 @@ export default function CreateTicketPage() {
 
   const [isLoadingMaster, setIsLoadingMaster] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [locale, setLocale] = useState<'id' | 'en'>('id')
+  const [locale, setLocale] = useState<'id' | 'en' | 'th'>('id')
 
   // State pilihan Master Data
   const [bhikkhus, setBhikkhus] = useState<any[]>([])

@@ -10,7 +10,7 @@ import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { getDictionary, getClientLocale } from '@/lib/dictionary'
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
-  const [locale, setLocale] = useState<'id' | 'en'>('id')
+  const [locale, setLocale] = useState<'id' | 'en' | 'th'>('id')
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()

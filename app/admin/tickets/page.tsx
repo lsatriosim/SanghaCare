@@ -170,7 +170,7 @@ export default function TicketsPage() {
   }
 
   return (
-    <TooltipProvider delayDuration={150}>
+    <TooltipProvider>
       <div className="space-y-6 max-w-7xl">
         <div>
           <h2 className="text-2xl font-bold text-sangha-dark">Daftar Tiket Permohonan / Kendala</h2>
