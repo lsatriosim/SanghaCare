@@ -8,9 +8,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
-  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+  TooltipProvider,
 } from '@/components/ui/tooltip'
-import { Plus, Ticket, MapPin, Tag, Calendar, Loader2, UserCheck, Languages, CheckCircle2 } from 'lucide-react'
+import { Plus, Ticket, MapPin, Tag, Calendar, Loader2, UserCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { getDictionary } from '@/lib/dictionary'
 
@@ -19,64 +19,11 @@ export default function UserTicketsPage() {
 
   const [tickets, setTickets] = useState<any[]>([])
   const [isLoadingFetch, setIsLoadingFetch] = useState(true)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [showOriginal, setShowOriginal] = useState<Set<number>>(new Set())
-  const [translations, setTranslations] = useState<
-    Record<
-      number,
-      {
-        description: string
-        room_detail: string
-      }
-    >
-  >({})
-
-  const [translatingTicketId, setTranslatingTicketId] = useState<number | null>(null)
 
   const supabase = createClient()
 
   const dict = getDictionary(lang)
   const t = dict.ticketsPage
-
-  const handleTranslate = async (ticketId: number) => {
-    setTranslatingTicketId(ticketId)
-
-    try {
-      const response = await fetch('/api/translate-ticket', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ticketId,
-        }),
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(
-          result?.error || 'Failed to translate ticket'
-        )
-      }
-
-      // Store translation only in React state.
-      setTranslations((prev) => ({
-        ...prev,
-        [ticketId]: result.translations,
-      }))
-
-      toast.success('Ticket berhasil diterjemahkan')
-    } catch (error: any) {
-      console.error('Translation error:', error)
-
-      toast.error('Gagal menerjemahkan ticket', {
-        description: error?.message,
-      })
-    } finally {
-      setTranslatingTicketId(null)
-    }
-  }
 
   const fetchUserTickets = async () => {
     setIsLoadingFetch(true)
@@ -96,7 +43,6 @@ export default function UserTicketsPage() {
       .single()
 
     const userRole = profileData?.role
-    setIsAdmin(userRole === 'admin' || userRole === 'staff')
 
     const { data, error } = await supabase
       .from('tickets')
@@ -112,7 +58,9 @@ export default function UserTicketsPage() {
     if (error) {
       toast.error(t.toastErrorFetch, { description: error.message })
     } else if (data) {
+      // Force restriction: only show tickets belonging strictly to the current user (non-admin/non-staff view)
       if (userRole === 'admin' || userRole === 'staff') {
+        // Fallback filter just in case an admin accesses this specific user path
         setTickets(data)
       } else {
         const filteredTickets = data.filter(
@@ -129,87 +77,84 @@ export default function UserTicketsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const getText = (item: any, field: 'description' | 'room_detail') => {
-    return item[field]
-  }
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">{t.status.pending}</Badge>
+        return <Badge variant="outline" className="bg-amber-100 text-amber-900 border-amber-300 px-3 py-1 text-sm font-semibold">{t.status.pending}</Badge>
       case 'in_progress':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">{t.status.in_progress}</Badge>
+        return <Badge variant="outline" className="bg-blue-100 text-blue-900 border-blue-300 px-3 py-1 text-sm font-semibold">{t.status.in_progress}</Badge>
       case 'resolved':
-        return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">{t.status.resolved}</Badge>
+        return <Badge variant="outline" className="bg-emerald-100 text-emerald-900 border-emerald-300 px-3 py-1 text-sm font-semibold">{t.status.resolved}</Badge>
       case 'closed':
-        return <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">{t.status.closed}</Badge>
+        return <Badge variant="outline" className="bg-gray-200 text-gray-800 border-gray-300 px-3 py-1 text-sm font-semibold">{t.status.closed}</Badge>
       default:
-        return <Badge variant="outline">{status || t.status.pending}</Badge>
+        return <Badge variant="outline" className="px-3 py-1 text-sm font-semibold">{status || t.status.pending}</Badge>
     }
   }
 
   return (
     <TooltipProvider>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="space-y-6 pb-12">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border-2 border-gray-300 shadow-sm">
           <div>
-            <h2 className="text-2xl font-bold text-sangha-dark">{t.title}</h2>
-            <p className="text-gray-600 text-sm">{t.subtitle}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.title}</h1>
+            <p className="text-gray-700 text-base sm:text-lg mt-1">{t.subtitle}</p>
           </div>
-          <Link href={`/${lang}/user/create`}>
-            <Button className="bg-sangha-primary hover:bg-sangha-dark text-white gap-2">
-              <Plus size={16} />
+          <Link href={`/${lang}/user/create`} className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto min-h-[52px] px-6 text-base font-bold bg-sangha-primary hover:bg-sangha-dark text-white gap-2 shadow-md">
+              <Plus size={20} />
               {t.createBtn}
             </Button>
           </Link>
         </div>
 
+        {/* Content Section */}
         {isLoadingFetch ? (
-          <Card className="border-sangha-cream shadow-xs bg-white">
-            <CardContent className="p-12 text-center text-gray-500">
-              <div className="flex flex-col items-center justify-center gap-2">
-                <Loader2 size={24} className="animate-spin text-sangha-primary" />
-                <span>{t.loading}</span>
+          <Card className="border-2 border-gray-300 shadow-md bg-white rounded-2xl">
+            <CardContent className="p-16 text-center text-gray-700">
+              <div className="flex flex-col items-center justify-center gap-3">
+                <Loader2 size={36} className="animate-spin text-sangha-primary" />
+                <span className="text-lg font-medium">{t.loading}</span>
               </div>
             </CardContent>
           </Card>
         ) : tickets.length === 0 ? (
-          <Card className="border-sangha-cream shadow-xs bg-white">
-            <CardContent className="p-12 text-center space-y-4">
-              <div className="w-12 h-12 rounded-full bg-sangha-light flex items-center justify-center mx-auto text-sangha-primary">
-                <Ticket size={24} />
+          <Card className="border-2 border-gray-300 shadow-md bg-white rounded-2xl">
+            <CardContent className="p-16 text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto text-sangha-primary">
+                <Ticket size={32} />
               </div>
-              <div className="space-y-1">
-                <h3 className="font-semibold text-sangha-dark text-lg">{t.emptyTitle}</h3>
-                <p className="text-gray-500 text-sm max-w-sm mx-auto">{t.emptyDesc}</p>
+              <div className="space-y-2">
+                <h3 className="font-bold text-gray-900 text-xl">{t.emptyTitle}</h3>
+                <p className="text-gray-700 text-base max-w-md mx-auto">{t.emptyDesc}</p>
               </div>
-              <Link href={`/${lang}/user/create`}>
-                <Button className="bg-sangha-primary hover:bg-sangha-dark text-white gap-2 mt-2">
-                  <Plus size={16} />
+              <Link href={`/${lang}/user/create`} className="inline-block pt-2">
+                <Button className="min-h-[52px] px-8 text-base font-bold bg-sangha-primary hover:bg-sangha-dark text-white gap-2 shadow-md">
+                  <Plus size={20} />
                   {t.emptyBtn}
                 </Button>
               </Link>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-6">
             {tickets.map((item) => (
-              <Card key={item.id} className="border-sangha-cream shadow-xs bg-white hover:border-sangha-primary/50 transition-colors">
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-gray-400">#{item.id}</span>
-                        {getStatusBadge(item.status)}
-                      </div>
-                      <div className="flex items-center gap-2 text-sangha-dark font-medium">
-                        <Tag size={15} className="text-sangha-primary shrink-0" />
+              <Card key={item.id} className="border-2 border-gray-300 shadow-md bg-white hover:border-sangha-primary transition-all rounded-2xl overflow-hidden">
+                <CardContent className="p-6 sm:p-8 space-y-4">
+                  {/* Card Header Info */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b-2 border-gray-100">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-sm font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-md">#{item.id}</span>
+                      {getStatusBadge(item.status)}
+                      <div className="flex items-center gap-2 text-gray-900 font-bold text-base sm:text-lg">
+                        <Tag size={18} className="text-sangha-primary shrink-0" />
                         <span>{item.category?.name || t.generalCategory}</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-sangha-light/60 px-3 py-1.5 rounded-md w-fit">
-                      <Calendar size={13} className="shrink-0" />
+                    <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 bg-gray-50 px-3.5 py-2 rounded-lg w-fit border border-gray-200">
+                      <Calendar size={16} className="text-gray-500 shrink-0" />
                       <span>
                         {new Date(item.created_at).toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'th' ? 'th-TH' : 'id-ID', {
                           day: 'numeric',
@@ -222,96 +167,52 @@ export default function UserTicketsPage() {
                     </div>
                   </div>
 
-                  <div className="grid sm:grid-cols-3 gap-3 text-sm border-t border-gray-100 pt-3">
-                    <div className="flex items-start gap-2 text-gray-600">
-                      <MapPin
-                        size={15}
-                        className="text-sangha-primary shrink-0 mt-0.5"
-                      />
-
+                  {/* Metadata Grid */}
+                  <div className="grid sm:grid-cols-3 gap-4 text-base pt-1">
+                    <div className="flex items-start gap-2.5 text-gray-800">
+                      <MapPin size={20} className="text-sangha-primary shrink-0 mt-0.5" />
                       <div>
                         <div>
-                          <strong className="text-sangha-dark">
-                            {t.location}
+                          <strong className="text-gray-900 font-bold">
+                            {t.location}:
                           </strong>{' '}
                           {item.location?.name || '-'}
                         </div>
-
                         {item.room_detail && (
-                          <div className="text-gray-500 text-xs mt-1">
-                            Ruang: {item.room_detail}
-
-                            {translations[item.id]?.room_detail && (
-                              <div className="text-sangha-primary mt-0.5">
-                                → {translations[item.id].room_detail}
-                              </div>
-                            )}
+                          <div className="text-gray-700 text-sm mt-1 bg-gray-50 p-2 rounded border border-gray-200">
+                            <span className="font-semibold">Ruang:</span> {item.room_detail}
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="text-gray-600">
-                      <strong className="text-sangha-dark">{t.reporter}</strong> {item.bhikkhu?.full_name || '-'}
+
+                    <div className="text-gray-800">
+                      <strong className="text-gray-900 font-bold">{t.reporter}:</strong>{' '}
+                      <span className="font-medium">{item.bhikkhu?.full_name || '-'}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-gray-600">
-                      <UserCheck size={15} className="text-sangha-primary shrink-0" />
+
+                    <div className="flex items-center gap-2 text-gray-800">
+                      <UserCheck size={20} className="text-sangha-primary shrink-0" />
                       <span>
-                        <strong className="text-sangha-dark">{t.assignee}</strong>{' '}
+                        <strong className="text-gray-900 font-bold">{t.assignee}:</strong>{' '}
                         {item.assignee?.full_name ? (
-                          <span className="text-sangha-primary font-medium">{item.assignee.full_name}</span>
+                          <span className="text-sangha-primary font-bold">{item.assignee.full_name}</span>
                         ) : (
-                          <span className="text-amber-600 italic">{t.unassigned}</span>
+                          <span className="text-amber-700 font-medium italic">{t.unassigned}</span>
                         )}
                       </span>
                     </div>
                   </div>
 
+                  {/* Description Box */}
                   {item.description && (
-                    <div className="mt-3 bg-gray-50 rounded-lg p-3 text-xs text-gray-600 border border-gray-100">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-semibold text-sangha-dark flex items-center gap-1">
-                          {t.descriptionTitle}
-                        </span>
+                    <div className="mt-4 bg-gray-50 rounded-xl p-4 sm:p-5 text-base text-gray-800 border-2 border-gray-200">
+                      <div className="font-bold text-gray-900 mb-2">
+                        {t.descriptionTitle}
                       </div>
-
-                      {/* Original */}
-                      <p className="whitespace-pre-wrap">
+                      <p className="whitespace-pre-wrap leading-relaxed">
                         {item.description}
                       </p>
-
-                      {/* Translation - only exists after clicking Translate */}
-                      {translations[item.id]?.description && (
-                        <p className="whitespace-pre-wrap text-sangha-primary mt-2 pt-2 border-t border-gray-200">
-                          → {translations[item.id].description}
-                        </p>
-                      )}
-
-                      {isAdmin && (
-                        <div className="flex items-center gap-2 mt-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleTranslate(item.id)}
-                            disabled={translatingTicketId === item.id}
-                            className="h-8 text-xs text-black border-black hover:bg-black-50 px-2 gap-1 flex-1"
-                          >
-                            {translatingTicketId === item.id ? (
-                              <>
-                                <Loader2
-                                  size={13}
-                                  className="animate-spin"
-                                />
-                                Translating...
-                              </>
-                            ) : (
-                              <>
-                                <Languages size={13} />
-                                Translate
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      )}
                     </div>
                   )}
                 </CardContent>

@@ -1,4 +1,3 @@
-// app/user/create/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -15,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, Send, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { getDictionary, getClientLocale } from '@/lib/dictionary'
+import { getDictionary } from '@/lib/dictionary'
 import { useParams } from 'next/navigation'
 
 export default function CreateTicketPage() {
@@ -155,7 +154,6 @@ export default function CreateTicketPage() {
     setIsSubmitting(true)
 
     try {
-      // 1. Create the ticket first
       const { data: ticket, error: ticketError } = await supabase
         .from('tickets')
         .insert([
@@ -196,57 +194,60 @@ export default function CreateTicketPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 pb-12">
+      {/* Back button and page title */}
       <div className="flex items-center gap-4">
         <Link href="/user">
           <Button
             variant="outline"
-            size="icon"
-            className="border-sangha-cream text-sangha-dark"
+            className="h-12 w-12 border-2 border-gray-400 text-gray-800 hover:bg-gray-100 rounded-lg flex items-center justify-center shrink-0"
+            aria-label="Kembali"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={24} />
           </Button>
         </Link>
 
         <div>
-          <h2 className="text-2xl font-bold text-sangha-dark">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
             {t.title}
-          </h2>
-          <p className="text-gray-600 text-sm">
+          </h1>
+          <p className="text-gray-700 text-base sm:text-lg mt-1">
             {t.subtitle}
           </p>
         </div>
       </div>
 
-      <Card className="border-sangha-cream shadow-xs bg-white">
-        <CardHeader>
-          <CardTitle className="text-lg text-sangha-dark font-semibold">
+      {/* Main Form Card */}
+      <Card className="border-2 border-gray-300 shadow-md bg-white rounded-xl">
+        <CardHeader className="p-6 border-b border-gray-200 bg-gray-50/50">
+          <CardTitle className="text-xl sm:text-2xl text-sangha-dark font-bold">
             {t.cardTitle}
           </CardTitle>
 
-          <CardDescription className="text-gray-500">
+          <CardDescription className="text-gray-700 text-base mt-1">
             {t.cardDesc}
           </CardDescription>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="p-6">
           {isLoadingMaster ? (
-            <div className="py-12 text-center flex flex-col items-center justify-center gap-2 text-gray-500">
+            <div className="py-16 text-center flex flex-col items-center justify-center gap-3 text-gray-700">
               <Loader2
-                size={24}
+                size={36}
                 className="animate-spin text-sangha-primary"
               />
-              <span>{t.loadingMaster}</span>
+              <span className="text-lg font-medium">{t.loadingMaster}</span>
             </div>
           ) : (
             <form
               onSubmit={handleSubmit}
-              className="space-y-5"
+              className="space-y-6"
             >
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-sangha-dark uppercase tracking-wider">
+              {/* 1. Nama Bhikkhu */}
+              <div className="space-y-2">
+                <label className="block text-lg font-bold text-gray-900">
                   {t.bhikkhuLabel}{' '}
-                  <span className="text-red-500">*</span>
+                  <span className="text-red-600 font-bold">*</span>
                 </label>
 
                 <select
@@ -254,10 +255,10 @@ export default function CreateTicketPage() {
                   value={formData.bhikkhu_id}
                   onChange={handleChange}
                   required
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-sangha-primary"
+                  className="w-full min-h-[52px] rounded-lg border-2 border-gray-400 bg-white px-4 py-3 text-base sm:text-lg text-gray-900 focus:outline-none focus:ring-4 focus:ring-amber-500/30 focus:border-sangha-primary"
                 >
                   <option value="">
-                    {t.bhikkhuPlaceholder}
+                    -- {t.bhikkhuPlaceholder} --
                   </option>
 
                   {bhikkhus.map((b) => (
@@ -274,11 +275,12 @@ export default function CreateTicketPage() {
                 </select>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-sangha-dark uppercase tracking-wider">
+              {/* 2. Lokasi & Detail Ruangan */}
+              <div className="space-y-6 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-6">
+                <div className="space-y-2">
+                  <label className="block text-lg font-bold text-gray-900">
                     {t.locationLabel}{' '}
-                    <span className="text-red-500">*</span>
+                    <span className="text-red-600 font-bold">*</span>
                   </label>
 
                   <select
@@ -286,10 +288,10 @@ export default function CreateTicketPage() {
                     value={formData.location_id}
                     onChange={handleChange}
                     required
-                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-sangha-primary"
+                    className="w-full min-h-[52px] rounded-lg border-2 border-gray-400 bg-white px-4 py-3 text-base sm:text-lg text-gray-900 focus:outline-none focus:ring-4 focus:ring-amber-500/30 focus:border-sangha-primary"
                   >
                     <option value="">
-                      {t.locationPlaceholder}
+                      -- {t.locationPlaceholder} --
                     </option>
 
                     {locations.map((loc) => (
@@ -303,9 +305,10 @@ export default function CreateTicketPage() {
                   </select>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-sangha-dark uppercase tracking-wider">
-                    {t.roomLabel}
+                <div className="space-y-2">
+                  <label className="block text-lg font-bold text-gray-900">
+                    {t.roomLabel}{' '}
+                    <span className="text-gray-500 font-normal text-base">(Opsional)</span>
                   </label>
 
                   <input
@@ -314,15 +317,16 @@ export default function CreateTicketPage() {
                     value={formData.room_detail}
                     onChange={handleChange}
                     placeholder={t.roomPlaceholder}
-                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-sangha-primary"
+                    className="w-full min-h-[52px] rounded-lg border-2 border-gray-400 bg-white px-4 py-3 text-base sm:text-lg text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-4 focus:ring-amber-500/30 focus:border-sangha-primary"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-sangha-dark uppercase tracking-wider">
+              {/* 3. Kategori */}
+              <div className="space-y-2">
+                <label className="block text-lg font-bold text-gray-900">
                   {t.categoryLabel}{' '}
-                  <span className="text-red-500">*</span>
+                  <span className="text-red-600 font-bold">*</span>
                 </label>
 
                 <select
@@ -330,10 +334,10 @@ export default function CreateTicketPage() {
                   value={formData.category_id}
                   onChange={handleChange}
                   required
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-sangha-primary"
+                  className="w-full min-h-[52px] rounded-lg border-2 border-gray-400 bg-white px-4 py-3 text-base sm:text-lg text-gray-900 focus:outline-none focus:ring-4 focus:ring-amber-500/30 focus:border-sangha-primary"
                 >
                   <option value="">
-                    {t.categoryPlaceholder}
+                    -- {t.categoryPlaceholder} --
                   </option>
 
                   {categories.map((cat) => (
@@ -347,10 +351,11 @@ export default function CreateTicketPage() {
                 </select>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-sangha-dark uppercase tracking-wider">
+              {/* 4. Deskripsi / Detail Bantuan */}
+              <div className="space-y-2">
+                <label className="block text-lg font-bold text-gray-900">
                   {t.descriptionLabel}{' '}
-                  <span className="text-red-500">*</span>
+                  <span className="text-red-600 font-bold">*</span>
                 </label>
 
                 <textarea
@@ -360,16 +365,17 @@ export default function CreateTicketPage() {
                   onChange={handleChange}
                   required
                   placeholder={t.descriptionPlaceholder}
-                  className="w-full rounded-md border border-gray-300 bg-white p-3 text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-sangha-primary resize-y"
+                  className="w-full rounded-lg border-2 border-gray-400 bg-white p-4 text-base sm:text-lg text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-4 focus:ring-amber-500/30 focus:border-sangha-primary resize-y"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-                <Link href="/user">
+              {/* Form Buttons */}
+              <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-6 border-t border-gray-200">
+                <Link href="/user" className="w-full sm:w-auto">
                   <Button
                     type="button"
                     variant="outline"
-                    className="border-gray-300 text-gray-700"
+                    className="w-full sm:w-auto h-12 px-6 text-base font-bold border-2 border-gray-400 text-gray-800 hover:bg-gray-100"
                   >
                     {t.cancelBtn}
                   </Button>
@@ -378,19 +384,19 @@ export default function CreateTicketPage() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-sangha-primary hover:bg-sangha-dark text-white gap-2"
+                  className="w-full sm:w-auto h-12 px-8 text-base font-bold bg-sangha-primary hover:bg-sangha-dark text-white gap-2 shadow-md"
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2
-                        size={16}
+                        size={20}
                         className="animate-spin"
                       />
                       <span>{t.submittingBtn}</span>
                     </>
                   ) : (
                     <>
-                      <Send size={16} />
+                      <Send size={20} />
                       <span>{t.submitBtn}</span>
                     </>
                   )}
