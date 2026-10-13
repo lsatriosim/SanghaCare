@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -11,12 +12,13 @@ import {
 } from '@/components/ui/tooltip'
 import { Plus, Ticket, MapPin, Tag, Calendar, Loader2, UserCheck, Languages, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { getDictionary, getClientLocale } from '@/lib/dictionary'
+import { getDictionary } from '@/lib/dictionary'
 
 export default function UserTicketsPage() {
+  const { lang } = useParams<{ lang: 'id' | 'en' | 'th' }>()
+
   const [tickets, setTickets] = useState<any[]>([])
   const [isLoadingFetch, setIsLoadingFetch] = useState(true)
-  const [locale, setLocale] = useState<'id' | 'en' | 'th'>('id')
   const [isAdmin, setIsAdmin] = useState(false)
   const [showOriginal, setShowOriginal] = useState<Set<number>>(new Set())
   const [translations, setTranslations] = useState<
@@ -33,11 +35,7 @@ export default function UserTicketsPage() {
 
   const supabase = createClient()
 
-  useEffect(() => {
-    setLocale(getClientLocale())
-  }, [])
-
-  const dict = getDictionary(locale)
+  const dict = getDictionary(lang)
   const t = dict.ticketsPage
 
   const handleTranslate = async (ticketId: number) => {
@@ -128,6 +126,7 @@ export default function UserTicketsPage() {
 
   useEffect(() => {
     fetchUserTickets()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const getText = (item: any, field: 'description' | 'room_detail') => {
@@ -157,7 +156,7 @@ export default function UserTicketsPage() {
             <h2 className="text-2xl font-bold text-sangha-dark">{t.title}</h2>
             <p className="text-gray-600 text-sm">{t.subtitle}</p>
           </div>
-          <Link href="/user/create">
+          <Link href={`/${lang}/user/create`}>
             <Button className="bg-sangha-primary hover:bg-sangha-dark text-white gap-2">
               <Plus size={16} />
               {t.createBtn}
@@ -184,7 +183,7 @@ export default function UserTicketsPage() {
                 <h3 className="font-semibold text-sangha-dark text-lg">{t.emptyTitle}</h3>
                 <p className="text-gray-500 text-sm max-w-sm mx-auto">{t.emptyDesc}</p>
               </div>
-              <Link href="/user/create">
+              <Link href={`/${lang}/user/create`}>
                 <Button className="bg-sangha-primary hover:bg-sangha-dark text-white gap-2 mt-2">
                   <Plus size={16} />
                   {t.emptyBtn}
@@ -212,7 +211,7 @@ export default function UserTicketsPage() {
                     <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-sangha-light/60 px-3 py-1.5 rounded-md w-fit">
                       <Calendar size={13} className="shrink-0" />
                       <span>
-                        {new Date(item.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'id-ID', {
+                        {new Date(item.created_at).toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'th' ? 'th-TH' : 'id-ID', {
                           day: 'numeric',
                           month: 'long',
                           year: 'numeric',

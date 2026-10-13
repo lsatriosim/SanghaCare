@@ -1,15 +1,19 @@
-// components/LanguageSwitcher.tsx
 'use client'
 
+import { useRouter, usePathname } from 'next/navigation'
 import { Globe } from 'lucide-react'
 
 export default function LanguageSwitcher({ currentLocale }: { currentLocale: string }) {
-  const toggleLanguage = (newLocale: string) => {
-    // 1. Simpan preferensi ke cookie
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const switchLanguage = (newLocale: string) => {
+    // Also set the cookie, so a future bare "/user" visit defaults sensibly
     document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000`
-    
-    // 2. Lakukan reload penuh halaman agar cookie langsung terbaca sempurna
-    window.location.reload()
+
+    const segments = pathname.split('/')
+    segments[1] = newLocale // first segment after the leading slash is the locale
+    router.push(segments.join('/'))
   }
 
   const languages = [
@@ -25,7 +29,7 @@ export default function LanguageSwitcher({ currentLocale }: { currentLocale: str
         <button
           key={lang.code}
           type="button"
-          onClick={() => toggleLanguage(lang.code)}
+          onClick={() => switchLanguage(lang.code)}
           className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
             currentLocale === lang.code ? 'bg-white text-sangha-dark shadow-xs' : 'text-gray-600 hover:text-black'
           }`}

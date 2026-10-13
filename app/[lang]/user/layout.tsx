@@ -7,25 +7,21 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { LogOut } from 'lucide-react'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
-import { getDictionary, getClientLocale } from '@/lib/dictionary'
+import { getDictionary } from '@/lib/dictionary'
+import { useParams } from 'next/navigation'
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
-  const [locale, setLocale] = useState<'id' | 'en' | 'th'>('id')
+  const { lang } = useParams<{ lang: 'id' | 'en' | 'th' }>()
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
 
-  useEffect(() => {
-    setLocale(getClientLocale())
-  }, [])
-
-  // Ambil kamus terpusat
-  const dict = getDictionary(locale)
+  const dict = getDictionary(lang)
   const t = dict.layout
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push('/login')
+    router.push(`/${lang}/login`)
     router.refresh()
   }
 
@@ -56,7 +52,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           </div>
 
           <div className="flex items-center gap-3">
-            <LanguageSwitcher currentLocale={locale} />
+            <LanguageSwitcher currentLocale={lang} />
             <Button
               variant="outline"
               size="sm"

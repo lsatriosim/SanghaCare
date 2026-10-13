@@ -16,6 +16,7 @@ import { Loader2, Send, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { getDictionary, getClientLocale } from '@/lib/dictionary'
+import { useParams } from 'next/navigation'
 
 export default function CreateTicketPage() {
   const router = useRouter()
@@ -23,7 +24,7 @@ export default function CreateTicketPage() {
 
   const [isLoadingMaster, setIsLoadingMaster] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [locale, setLocale] = useState<'id' | 'en' | 'th'>('id')
+  const { lang } = useParams<{ lang: 'id' | 'en' | 'th' }>()
 
   // State pilihan Master Data
   const [bhikkhus, setBhikkhus] = useState<any[]>([])
@@ -39,13 +40,7 @@ export default function CreateTicketPage() {
     description: '',
   })
 
-  // Set locale saat komponen dimuat
-  useEffect(() => {
-    setLocale(getClientLocale())
-  }, [])
-
-  // Ambil teks kamus terpusat
-  const dict = getDictionary(locale)
+  const dict = getDictionary(lang)
   const t = dict.createTicketPage
 
   // 1. Ambil data master & cek role pengguna untuk aturan filter bhikkhu
