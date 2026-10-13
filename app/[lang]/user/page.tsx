@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import {
   TooltipProvider,
 } from '@/components/ui/tooltip'
-import { Plus, Ticket, MapPin, Tag, Calendar, Loader2, UserCheck } from 'lucide-react'
+import { Plus, Ticket, MapPin, Tag, Calendar, Loader2, UserCheck, Languages } from 'lucide-react'
 import { toast } from 'sonner'
 import { getDictionary } from '@/lib/dictionary'
 
@@ -19,11 +19,60 @@ export default function UserTicketsPage() {
 
   const [tickets, setTickets] = useState<any[]>([])
   const [isLoadingFetch, setIsLoadingFetch] = useState(true)
+  const [translations, setTranslations] = useState<
+    Record<
+      number,
+      {
+        description: string
+        room_detail: string
+      }
+    >
+  >({})
+  const [translatingTicketId, setTranslatingTicketId] = useState<number | null>(null)
 
   const supabase = createClient()
 
   const dict = getDictionary(lang)
   const t = dict.ticketsPage
+
+  const handleTranslate = async (ticketId: number) => {
+    setTranslatingTicketId(ticketId)
+
+    try {
+      const response = await fetch('/api/translate-ticket', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ticketId,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error || 'Failed to translate ticket'
+        )
+      }
+
+      setTranslations((prev) => ({
+        ...prev,
+        [ticketId]: result.translations,
+      }))
+
+      toast.success('Ticket berhasil diterjemahkan')
+    } catch (error: any) {
+      console.error('Translation error:', error)
+
+      toast.error('Gagal menerjemahkan ticket', {
+        description: error?.message,
+      })
+    } finally {
+      setTranslatingTicketId(null)
+    }
+  }
 
   const fetchUserTickets = async () => {
     setIsLoadingFetch(true)
@@ -58,9 +107,7 @@ export default function UserTicketsPage() {
     if (error) {
       toast.error(t.toastErrorFetch, { description: error.message })
     } else if (data) {
-      // Force restriction: only show tickets belonging strictly to the current user (non-admin/non-staff view)
       if (userRole === 'admin' || userRole === 'staff') {
-        // Fallback filter just in case an admin accesses this specific user path
         setTickets(data)
       } else {
         const filteredTickets = data.filter(
@@ -179,8 +226,13 @@ export default function UserTicketsPage() {
                           {item.location?.name || '-'}
                         </div>
                         {item.room_detail && (
-                          <div className="text-gray-700 text-sm mt-1 bg-gray-50 p-2 rounded border border-gray-200">
+                          <div className="text-gray-800 text-sm mt-1 bg-gray-50 p-2.5 rounded-lg border border-gray-200">
                             <span className="font-semibold">Ruang:</span> {item.room_detail}
+                            {translations[item.id]?.room_detail && (
+                              <div className="text-sangha-primary font-bold mt-1 pt-1 border-t border-gray-200">
+                                → {translations[item.id].room_detail}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -204,15 +256,53 @@ export default function UserTicketsPage() {
                     </div>
                   </div>
 
-                  {/* Description Box */}
+                  {/* Description & Translation Box */}
                   {item.description && (
-                    <div className="mt-4 bg-gray-50 rounded-xl p-4 sm:p-5 text-base text-gray-800 border-2 border-gray-200">
-                      <div className="font-bold text-gray-900 mb-2">
+                    <div className="mt-4 bg-gray-50 rounded-xl p-4 sm:p-5 text-base text-gray-800 border-2 border-gray-200 space-y-3">
+                      <div className="font-bold text-gray-900">
                         {t.descriptionTitle}
                       </div>
+
                       <p className="whitespace-pre-wrap leading-relaxed">
                         {item.description}
                       </p>
+
+                      {/* Display translated text when available */}
+                      {translations[item.id]?.description && (
+                        <div className="bg-amber-50/80 p-4 rounded-lg border-2 border-amber-200 text-amber-950 mt-3">
+                          <div className="font-bold text-amber-900 mb-1 text-sm uppercase tracking-wide">
+                            Terjemahan:
+                          </div>
+                          <p className="whitespace-pre-wrap leading-relaxed font-medium">
+                            {translations[item.id].description}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Translate Action Button */}
+                      <div className="pt-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => handleTranslate(item.id)}
+                          disabled={translatingTicketId === item.id}
+                          className="min-h-[48px] px-5 text-base font-bold text-gray-900 border-2 border-gray-800 hover:bg-gray-100 gap-2 rounded-lg"
+                        >
+                          {translatingTicketId === item.id ? (
+                            <>
+                              <Loader2
+                                size={18}
+                                className="animate-spin text-sangha-primary"
+                              />
+                              <span>Menerjemahkan...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Languages size={18} />
+                              <span>{translations[item.id] ? 'Terjemahkan Lagi' : 'Terjemahkan'}</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </CardContent>
