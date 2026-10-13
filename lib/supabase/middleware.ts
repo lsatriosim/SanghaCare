@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@/middleware'
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -53,8 +54,12 @@ export async function updateSession(request: NextRequest) {
 
     // For web page routes, redirect to login
     if (!path.startsWith('/login') && !path.startsWith('/auth')) {
+      const cookieLocale = request.cookies.get('NEXT_LOCALE')?.value
+      const locale = SUPPORTED_LOCALES.includes(cookieLocale as any)
+        ? cookieLocale
+        : DEFAULT_LOCALE
       const url = request.nextUrl.clone()
-      url.pathname = '/login'
+      url.pathname = `/${locale}/login`
       return NextResponse.redirect(url)
     }
   }

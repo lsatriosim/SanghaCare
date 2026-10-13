@@ -2,8 +2,8 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
-const SUPPORTED_LOCALES = ['id', 'en', 'th'] as const
-const DEFAULT_LOCALE = 'id'
+export const SUPPORTED_LOCALES = ['id', 'en', 'th'] as const
+export const DEFAULT_LOCALE = 'id'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
